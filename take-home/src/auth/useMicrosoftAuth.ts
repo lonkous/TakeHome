@@ -24,6 +24,17 @@ const discovery = {
 
 type AuthError = string | null;
 
+export type GraphUser = {
+  displayName?: string;
+  givenName?: string;
+  surname?: string;
+  mail?: string | null;
+  userPrincipalName?: string;
+  jobTitle?: string | null;
+  officeLocation?: string | null;
+  id?: string;
+};
+
 export default function useMicrosoftAuth() {
   const redirectUri =
     Platform.OS === 'web'
@@ -32,6 +43,7 @@ export default function useMicrosoftAuth() {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [user, setUser] = useState<GraphUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AuthError>(null);
 
@@ -51,18 +63,18 @@ export default function useMicrosoftAuth() {
       });
       if (!result.ok) {
         const body = await result.text().catch(() => '');
-        console.log('Token validation failed', result.status, body);
         try {
           const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
           console.log('Token aud/scp', { aud: payload.aud, scp: payload.scp, exp: payload.exp });
-        } catch { }
+        } catch {}
         throw new Error(`Graph /me failed: ${result.status} ${body}`);
       }
-      const user = await result.json();
-      console.log('Token is valid:', user);
+      const data = (await result.json()) as GraphUser;
+      setUser(data);
       return true;
     } catch (err) {
       console.log('Token is invalid:', err);
+      setUser(null);
       return false;
     }
   }, []);
@@ -75,6 +87,7 @@ export default function useMicrosoftAuth() {
       if (!stored.accessToken) {
         setIsLoggedIn(false);
         setAccessToken(null);
+        setUser(null);
         return;
       }
 
@@ -131,12 +144,14 @@ export default function useMicrosoftAuth() {
         }
         await clearTokens();
         setAccessToken(null);
+        setUser(null);
         setIsLoggedIn(false);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setIsLoggedIn(false);
       setAccessToken(null);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -225,6 +240,7 @@ export default function useMicrosoftAuth() {
           await clearTokens();
           setIsLoggedIn(false);
           setAccessToken(null);
+          setUser(null);
         } finally {
           setLoading(false);
         }
@@ -245,6 +261,7 @@ export default function useMicrosoftAuth() {
   const logout = useCallback(async () => {
     await clearTokens();
     setAccessToken(null);
+    setUser(null);
     setIsLoggedIn(false);
     setError(null);
     setLoading(false);
@@ -276,6 +293,7 @@ export default function useMicrosoftAuth() {
       await clearTokens();
       setIsLoggedIn(false);
       setAccessToken(null);
+      setUser(null);
       return null;
     }
   }, []);
@@ -286,6 +304,7 @@ export default function useMicrosoftAuth() {
     promptAsync,
     isLoggedIn,
     accessToken,
+    user,
     loading,
     error,
     logout,
