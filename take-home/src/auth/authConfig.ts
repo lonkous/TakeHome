@@ -8,6 +8,7 @@ export const entraConfig = {
     'profile',
     'email',
     'offline_access',
+    'User.Read',
   ],
 };
 

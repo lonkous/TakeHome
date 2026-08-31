@@ -1,5 +1,5 @@
-import { Button } from 'react-native';
-import useMicrosoftAuth from './useMicrosoftAuth';
+import { ActivityIndicator, Button, Text, View } from 'react-native';
+import { useAuth } from './AuthContext';
 
 type Props = {
     title?: string;
@@ -8,18 +8,29 @@ type Props = {
 export default function MicrosoftLoginButton({
     title = 'Sign in with Microsoft',
 }: Props) {
-    const { request, response, promptAsync, isLoggedIn } = useMicrosoftAuth();
+    const { request, promptAsync, isLoggedIn, loading, error, logout, accessToken } = useAuth();
 
+    if (loading) {
+        return <ActivityIndicator />;
+    }
+
+    if (isLoggedIn) {
+        return (
+            <View style={{ gap: 8, alignItems: 'center' }}>
+                <Text>Signed in{accessToken ? '' : ''}</Text>
+                <Button title="Sign out" onPress={logout} />
+            </View>
+        );
+    }
 
     return (
-        <>
-            {!isLoggedIn && (
-                <Button
-                    title="Sign in with Microsoft"
-                    disabled={!request}
-                    onPress={() => promptAsync()}
-                />
-            )}
-        </>
+        <View style={{ gap: 8, alignItems: 'center' }}>
+            <Button
+                title={title}
+                disabled={!request}
+                onPress={() => promptAsync()}
+            />
+            {error ? <Text style={{ color: 'red', marginTop: 8 }}>{error}</Text> : null}
+        </View>
     );
 }

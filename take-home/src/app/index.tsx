@@ -1,10 +1,21 @@
-import { Text, View, StyleSheet } from "react-native";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
 import MicrosoftLoginButton from "@/auth/MicrosoftLoginButton";
+import { useAuth } from "@/auth/AuthContext";
 
 export default function Index() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
   return (
-    <View >
-      {/* <MicrosoftLoginButton/> */}
+    <View style={styles.container}>
+      <MicrosoftLoginButton />
     </View>
   );
 }
