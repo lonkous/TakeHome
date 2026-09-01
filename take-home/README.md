@@ -22,4 +22,4 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```
 
 ## Sources
-[Microsoft Blog][https://techcommunity.microsoft.com/blog/educatordeveloperblog/getting-started-with-azure-cosmos-db-sdk-for-typescriptjavascript-4-2-0/4345532]
+[Microsoft Blog](https://techcommunity.microsoft.com/blog/educatordeveloperblog/getting-started-with-azure-cosmos-db-sdk-for-typescriptjavascript-4-2-0/4345532)
