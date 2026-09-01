@@ -21,3 +21,5 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    bunx expo start --start
    ```
 
+## Sources
+[Microsoft Blog][https://techcommunity.microsoft.com/blog/educatordeveloperblog/getting-started-with-azure-cosmos-db-sdk-for-typescriptjavascript-4-2-0/4345532]
