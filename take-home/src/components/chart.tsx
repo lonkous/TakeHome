@@ -1,27 +1,40 @@
 import { LinearGradient, vec } from "@shopify/react-native-skia";
-import { CartesianChart, Bar } from "victory-native";
+import { CartesianChart, Bar, type ChartBounds } from "victory-native";
+
+import { useTheme } from "@/hooks/use-theme";
 
 export interface ChartData extends Record<string, unknown> {
   month: number;
   value: number;
 }
 
-interface ChartProps {
+export interface ChartProps {
   data: ChartData[];
+  paddingX?: number;
+  onChartBoundsChange?: (bounds: ChartBounds) => void;
 }
 
-export default function Chart({ data }: ChartProps) {
+export default function Chart({
+  data,
+  paddingX = 50,
+  onChartBoundsChange,
+}: ChartProps) {
+  const theme = useTheme();
+
   return (
     <CartesianChart
       data={data}
       xKey="month"
       yKeys={["value"]}
       domainPadding={{
-        left: 50,
-        right: 50,
+        left: paddingX,
+        right: paddingX,
         top: 30,
       }}
+      onChartBoundsChange={onChartBoundsChange}
       axisOptions={{
+        labelColor: theme.textSecondary,
+        lineColor: theme.textSecondary,
         formatXLabel(value) {
           const date = new Date(2023, Number(value) - 1);
 

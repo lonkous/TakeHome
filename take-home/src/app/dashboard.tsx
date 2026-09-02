@@ -3,15 +3,19 @@ import { useTourTarget } from "@/lib/tour";
 import {
   ActivityIndicator,
   StyleSheet,
-  Text,
   View,
   Platform,
 } from "react-native";
-import type { ChartData } from "@/components/chart";
+import type { ChartData, ChartProps } from "@/components/chart";
+import type { ChartBounds } from "victory-native";
 import type { TData } from "@/schemas/data.schema";
 import { HelpButton } from "@/components/help-button";
+import { ThemedText } from "@/components/themed-text";
 
-let Chart: React.ComponentType<{ data: ChartData[] }> | null = null;
+const CHART_PAD_X = 50;
+const BAR_LABEL_WIDTH = 48;
+
+let Chart: React.ComponentType<ChartProps> | null = null;
 if (Platform.OS !== "web") {
   Chart = require("@/components/chart").default;
 }
@@ -19,6 +23,15 @@ if (Platform.OS !== "web") {
 function DashboardContent({ chartData }: { chartData: ChartData[] }) {
   const chartRef = useTourTarget("chart");
   const keyRef = useTourTarget("key");
+  const [chartBounds, setChartBounds] = useState<ChartBounds | null>(null);
+
+  const barX = (index: number): number => {
+    if (!chartBounds) return 0;
+    const { left, right } = chartBounds;
+    if (chartData.length === 1) return (left + right) / 2;
+    const span = right - left - 2 * CHART_PAD_X;
+    return left + CHART_PAD_X + (index * span) / (chartData.length - 1);
+  };
 
   if (Platform.OS === "web") {
     return (
@@ -26,12 +39,12 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
         <View ref={chartRef as any} collapsable={false} style={styles.webList}>
           {chartData.map((item) => (
             <View key={item.month} style={styles.webRow}>
-              <Text style={styles.month}>
+              <ThemedText themeColor="textSecondary" style={styles.month}>
                 {new Date(2023, item.month - 1).toLocaleString("default", {
                   month: "short",
                 })}
                 : {item.value}
-              </Text>
+              </ThemedText>
               <View
                 style={[
                   styles.webBar,
@@ -42,7 +55,7 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
           ))}
         </View>
         <View ref={keyRef as any} collapsable={false} style={{ marginTop: 16 }}>
-          <Text>Create instantly demo</Text>
+          <ThemedText>Create instantly demo</ThemedText>
         </View>
         <HelpButton />
       </View>
@@ -54,22 +67,45 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
       <View style={styles.chart} ref={chartRef as any} collapsable={false}>
         {Chart ? (
           <>
-            <Chart data={chartData} />
-            <View style={styles.values} collapsable={false}>
-              {chartData.map((item) => (
-                <Text key={`v-${item.month}`} style={styles.value}>
-                  {item.value}
-                </Text>
-              ))}
+            <View style={styles.canvas}>
+              <Chart
+                data={chartData}
+                paddingX={CHART_PAD_X}
+                onChartBoundsChange={setChartBounds}
+              />
             </View>
-            <View style={styles.months} ref={keyRef as any}>
-              {chartData.map((item) => (
-                <Text key={item.month} style={styles.month}>
-                  {new Date(2023, item.month - 1).toLocaleString("default", {
-                    month: "short",
-                  })}
-                </Text>
-              ))}
+            <View style={styles.labelRow} collapsable={false}>
+              {chartBounds &&
+                chartData.map((item, i) => (
+                  <ThemedText
+                    key={`v-${item.month}`}
+                    style={[
+                      styles.value,
+                      styles.barLabel,
+                      { left: barX(i) - BAR_LABEL_WIDTH / 2 },
+                    ]}
+                  >
+                    {item.value}
+                  </ThemedText>
+                ))}
+            </View>
+            <View style={styles.labelRow} ref={keyRef as any}>
+              {chartBounds &&
+                chartData.map((item, i) => (
+                  <ThemedText
+                    key={item.month}
+                    themeColor="textSecondary"
+                    style={[
+                      styles.month,
+                      styles.barLabel,
+                      { left: barX(i) - BAR_LABEL_WIDTH / 2 },
+                    ]}
+                  >
+                    {new Date(2023, item.month - 1).toLocaleString("default", {
+                      month: "short",
+                    })}
+                  </ThemedText>
+                ))}
             </View>
           </>
         ) : null}
@@ -126,7 +162,9 @@ export default function Index() {
     return (
       <View style={styles.center}>
         <ActivityIndicator />
-        <Text style={styles.hint}>Loading datas...</Text>
+        <ThemedText themeColor="textSecondary" style={styles.hint}>
+          Loading datas...
+        </ThemedText>
       </View>
     );
   }
@@ -134,14 +172,16 @@ export default function Index() {
   if (error) {
     return (
       <View style={styles.center}>
-        <Text style={styles.error}>Error: {error}</Text>
-        <Text style={styles.hint}>Showing fallback data</Text>
+        <ThemedText style={styles.error}>Error: {error}</ThemedText>
+        <ThemedText themeColor="textSecondary" style={styles.hint}>
+          Showing fallback data
+        </ThemedText>
         <View style={styles.chart}>
           {Platform.OS !== "web" && Chart ? (
             <Chart data={fallback} />
           ) : (
             <View>
-              <Text>This currently only works for mobile</Text>
+              <ThemedText>This currently only works for mobile</ThemedText>
             </View>
           )}
         </View>
@@ -152,7 +192,7 @@ export default function Index() {
   if (!chartData.length) {
     return (
       <View style={styles.center}>
-        <Text>No data</Text>
+        <ThemedText>No data</ThemedText>
       </View>
     );
   }
@@ -179,7 +219,6 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 12,
-    color: "#667085",
     marginTop: 8,
   },
   chart: {
@@ -187,31 +226,30 @@ const styles = StyleSheet.create({
     height: 300,
     paddingTop: 25,
     paddingHorizontal: 25,
-    paddingBottom: 50,
+    paddingBottom: 10,
   },
 
-  months: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 50,
+  canvas: {
+    flex: 1,
+  },
+
+  labelRow: {
+    height: 18,
+    width: "100%",
+  },
+
+  barLabel: {
+    position: "absolute",
+    width: BAR_LABEL_WIDTH,
+    textAlign: "center",
   },
 
   month: {
     fontSize: 12,
-    color: "#303038",
-  },
-  values: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 50,
-    marginTop: 8,
   },
   value: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#111827",
-    textAlign: "center",
-    minWidth: 24,
   },
   webList: {
     width: "100%",
