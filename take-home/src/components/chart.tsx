@@ -1,5 +1,5 @@
 import { LinearGradient, vec } from "@shopify/react-native-skia";
-import { CartesianChart, Bar, type ChartBounds } from "victory-native";
+import { CartesianChart, Bar, type Scale } from "victory-native";
 
 import { useTheme } from "@/hooks/use-theme";
 
@@ -10,15 +10,10 @@ export interface ChartData extends Record<string, unknown> {
 
 export interface ChartProps {
   data: ChartData[];
-  paddingX?: number;
-  onChartBoundsChange?: (bounds: ChartBounds) => void;
+  onScaleChange?: (xScale: Scale) => void;
 }
 
-export default function Chart({
-  data,
-  paddingX = 50,
-  onChartBoundsChange,
-}: ChartProps) {
+export default function Chart({ data, onScaleChange }: ChartProps) {
   const theme = useTheme();
 
   return (
@@ -27,11 +22,11 @@ export default function Chart({
       xKey="month"
       yKeys={["value"]}
       domainPadding={{
-        left: paddingX,
-        right: paddingX,
+        left: 50,
+        right: 50,
         top: 30,
       }}
-      onChartBoundsChange={onChartBoundsChange}
+      onScaleChange={(x) => onScaleChange?.(x)}
       axisOptions={{
         labelColor: theme.textSecondary,
         lineColor: theme.textSecondary,

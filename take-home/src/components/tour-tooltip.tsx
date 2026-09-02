@@ -66,16 +66,20 @@ export function TourTooltip(props: TooltipRenderProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#1A1A1E",
+    backgroundColor: '#1A1A1E',
     borderRadius: 16,
     padding: 16,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOpacity: 0.18,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
     minWidth: 260,
     maxWidth: 320,
+  },
+  tint: {
+    backgroundColor: "rgba(26,26,30,0.55)",
+    borderRadius: 16,
   },
   title: { fontSize: 17, fontWeight: "800", marginBottom: 6, color: "#fff" },
   body: { fontSize: 15, lineHeight: 21, color: "#EAEAEA" },

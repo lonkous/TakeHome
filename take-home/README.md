@@ -5,7 +5,8 @@ Cross-platform app built with Expo running Android / Web (Web was with limitatio
 ## Key Features
 
 ### 1. Microsoft Entra ID Authentication (`src/auth/`)
-OAuth 2.0  `expo-auth-session` against `https://login.microsoftonline.com/{tenant}/oauth2/v2.0`.
+
+OAuth 2.0 `expo-auth-session` against `https://login.microsoftonline.com/{tenant}/oauth2/v2.0`.
 
 - `authConfig.ts` - validates `EXPO_PUBLIC_AZURE_CLIENT_ID` / `EXPO_PUBLIC_AZURE_TENANT_ID`, exposes `entraConfig` scopes (`openid profile email offline_access User.Read`) and discovery endpoints.
 - `useMicrosoftAuth.ts` - core hook: `useAuthRequest` plus `exchangeCodeAsync` / `refreshAsync`, JWT validation against `https://graph.microsoft.com/v1.0/me`, token refresh with expiry buffer. Handles `takehome://redirect` (native) vs `makeRedirectUri()` (web).
@@ -14,12 +15,14 @@ OAuth 2.0  `expo-auth-session` against `https://login.microsoftonline.com/{tenan
 - `profile-card.tsx` - `SignInCard` (sign-in CTA plus error display) and `ProfileCard` (avatar initials, Entra-encoded email decoding, sign-out).
 
 ### 2. Dashboard and Data Visualization (`src/app/dashboard.tsx`, `src/components/chart.tsx`, `src/services/cosmos/`)
+
 - API route `src/app/api/datas+api.ts:1` - `GET /api/datas` lazily initializes Cosmos DB then returns `Response.json(getAllData())`.
 - Cosmos service `src/services/cosmos/config.ts` (singleton `CosmosClient` plus `createIfNotExists` DB/container `TakeHomeC` on `/id`) and `data.service.ts` (CRUD: `getAllData`, `getDataById`, `createData`, `upsertData`, `deleteData` with mapped `TData` to `CosmosData` and `handleCosmosError`).
 - Schema `src/schemas/data.schema.ts` - Zod `dataSchema { id: number, value: number }`.
 - Dashboard fetches `/api/datas`, maps `id` to `month` and `value` to `value` sorted by `id`, handles `loading` / `error` / `empty` states. Web renders lightweight div bars (`width: min(value,100)%`); Native lazy-requires `Chart` via `victory-native` plus `@shopify/react-native-skia` (`CartesianChart` with `Bar` plus `LinearGradient` `#a78bfa` to `#a78bfa50`).
 
 ### 3. Guided App Tour (`src/components/app-tour-provider.tsx`, `src/lib/tour*`)
+
 Powered by `guideway` (native).
 
 - `tours` definition: `main` with 3 steps `chart` ("Chart Data"), `key` ("Months"), `profile` (cutout radius 20).
@@ -83,6 +86,7 @@ Powered by `guideway` (native).
 ## Getting Started
 
 ### Prerequisites
+
 - Node 20+ / Bun
 - Expo CLI (`bunx expo`)
 - Azure Entra app registration (client ID plus tenant ID) and Cosmos DB account (endpoint plus key)
@@ -106,15 +110,13 @@ bun run android          # native Android build
 
 The original template command `bunx expo start --start` in the starter README is not a valid Expo flag - use `bunx expo start` instead.
 
-
 ## API Routes
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| `GET` | `/api/datas` | Returns all `TData[]` from Cosmos container `TakeHomeC` (`src/app/api/datas+api.ts:6`) |
+| Method | Route        | Description                                                                            |
+| ------ | ------------ | -------------------------------------------------------------------------------------- |
+| `GET`  | `/api/datas` | Returns all `TData[]` from Cosmos container `TakeHomeC` (`src/app/api/datas+api.ts:6`) |
 
 ## Sources Used
 
 - [Microsoft Blog - Getting started with Azure Cosmos DB SDK for TypeScript/JavaScript 4.2.0](https://techcommunity.microsoft.com/blog/educatordeveloperblog/getting-started-with-azure-cosmos-db-sdk-for-typescriptjavascript-4-2-0/4345532)
 - [Guideway Documentation](https://guideway.dev/docs/quick-start/)
-

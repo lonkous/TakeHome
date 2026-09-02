@@ -1,18 +1,14 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTourTarget } from "@/lib/tour";
-import {
-  ActivityIndicator,
-  StyleSheet,
-  View,
-  Platform,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, View, Platform } from "react-native";
 import type { ChartData, ChartProps } from "@/components/chart";
-import type { ChartBounds } from "victory-native";
+import type { Scale } from "victory-native";
 import type { TData } from "@/schemas/data.schema";
 import { HelpButton } from "@/components/help-button";
 import { ThemedText } from "@/components/themed-text";
+import { Backgrounds } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
-const CHART_PAD_X = 50;
 const BAR_LABEL_WIDTH = 48;
 
 let Chart: React.ComponentType<ChartProps> | null = null;
@@ -23,19 +19,22 @@ if (Platform.OS !== "web") {
 function DashboardContent({ chartData }: { chartData: ChartData[] }) {
   const chartRef = useTourTarget("chart");
   const keyRef = useTourTarget("key");
-  const [chartBounds, setChartBounds] = useState<ChartBounds | null>(null);
+  const [xScale, setXScale] = useState<Scale | null>(null);
+  const scheme = useColorScheme();
+  const screenBg = scheme === "dark" ? Backgrounds.dark : Backgrounds.light;
 
-  const barX = (index: number): number => {
-    if (!chartBounds) return 0;
-    const { left, right } = chartBounds;
-    if (chartData.length === 1) return (left + right) / 2;
-    const span = right - left - 2 * CHART_PAD_X;
-    return left + CHART_PAD_X + (index * span) / (chartData.length - 1);
-  };
+  const handleScaleChange = useCallback(
+    (x: Scale) => setXScale(() => x),
+    []
+  );
+
+  const barX = (month: number): number => (xScale ? xScale(month) : 0);
 
   if (Platform.OS === "web") {
     return (
-      <View style={styles.container}>
+      <View
+        style={[styles.container, { experimental_backgroundImage: screenBg }]}
+      >
         <View ref={chartRef as any} collapsable={false} style={styles.webList}>
           {chartData.map((item) => (
             <View key={item.month} style={styles.webRow}>
@@ -63,26 +62,24 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[styles.container, { experimental_backgroundImage: screenBg }]}
+    >
       <View style={styles.chart} ref={chartRef as any} collapsable={false}>
         {Chart ? (
           <>
             <View style={styles.canvas}>
-              <Chart
-                data={chartData}
-                paddingX={CHART_PAD_X}
-                onChartBoundsChange={setChartBounds}
-              />
+              <Chart data={chartData} onScaleChange={handleScaleChange} />
             </View>
             <View style={styles.labelRow} collapsable={false}>
-              {chartBounds &&
-                chartData.map((item, i) => (
+              {xScale &&
+                chartData.map((item) => (
                   <ThemedText
                     key={`v-${item.month}`}
                     style={[
                       styles.value,
                       styles.barLabel,
-                      { left: barX(i) - BAR_LABEL_WIDTH / 2 },
+                      { left: barX(item.month) - BAR_LABEL_WIDTH / 2 },
                     ]}
                   >
                     {item.value}
@@ -90,15 +87,15 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
                 ))}
             </View>
             <View style={styles.labelRow} ref={keyRef as any}>
-              {chartBounds &&
-                chartData.map((item, i) => (
+              {xScale &&
+                chartData.map((item) => (
                   <ThemedText
                     key={item.month}
                     themeColor="textSecondary"
                     style={[
                       styles.month,
                       styles.barLabel,
-                      { left: barX(i) - BAR_LABEL_WIDTH / 2 },
+                      { left: barX(item.month) - BAR_LABEL_WIDTH / 2 },
                     ]}
                   >
                     {new Date(2023, item.month - 1).toLocaleString("default", {
@@ -119,6 +116,8 @@ export default function Index() {
   const [raw, setRaw] = useState<TData[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scheme = useColorScheme();
+  const screenBg = scheme === "dark" ? Backgrounds.dark : Backgrounds.light;
 
   useEffect(() => {
     let cancelled = false;
@@ -160,7 +159,7 @@ export default function Index() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { experimental_backgroundImage: screenBg }]}>
         <ActivityIndicator />
         <ThemedText themeColor="textSecondary" style={styles.hint}>
           Loading datas...
@@ -171,7 +170,7 @@ export default function Index() {
 
   if (error) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { experimental_backgroundImage: screenBg }]}>
         <ThemedText style={styles.error}>Error: {error}</ThemedText>
         <ThemedText themeColor="textSecondary" style={styles.hint}>
           Showing fallback data
@@ -191,7 +190,7 @@ export default function Index() {
 
   if (!chartData.length) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { experimental_backgroundImage: screenBg }]}>
         <ThemedText>No data</ThemedText>
       </View>
     );
