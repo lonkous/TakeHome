@@ -22,8 +22,6 @@ const discovery = {
   tokenEndpoint: entraDiscovery.tokenEndpoint,
 };
 
-type AuthError = string | null;
-
 export type GraphUser = {
   displayName?: string;
   givenName?: string;
@@ -37,15 +35,13 @@ export type GraphUser = {
 
 export default function useMicrosoftAuth() {
   const redirectUri =
-    Platform.OS === "web"
-      ? makeRedirectUri({ scheme: undefined } as any)
-      : "takehome://redirect";
+    Platform.OS === "web" ? makeRedirectUri() : "takehome://redirect";
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [user, setUser] = useState<GraphUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<AuthError>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -75,6 +71,23 @@ export default function useMicrosoftAuth() {
     }
   }, []);
 
+  const refreshTokens = useCallback(
+    async (refreshToken: string): Promise<string> => {
+      const refreshed = await refreshAsync(
+        { clientId: entraConfig.clientId, refreshToken },
+        discovery,
+      );
+      await saveTokens({
+        accessToken: refreshed.accessToken,
+        refreshToken: refreshed.refreshToken ?? refreshToken,
+        idToken: refreshed.idToken ?? undefined,
+        expiresIn: refreshed.expiresIn ?? undefined,
+      });
+      return refreshed.accessToken;
+    },
+    [],
+  );
+
   const restoreSession = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -87,65 +100,30 @@ export default function useMicrosoftAuth() {
         return;
       }
 
-      if (isTokenExpired(stored.expiresAt) && stored.refreshToken) {
-        try {
-          const refreshed = await refreshAsync(
-            {
-              clientId: entraConfig.clientId,
-              refreshToken: stored.refreshToken,
-            },
-            discovery,
-          );
-          await saveTokens({
-            accessToken: refreshed.accessToken,
-            refreshToken: refreshed.refreshToken ?? stored.refreshToken,
-            idToken: refreshed.idToken ?? undefined,
-            expiresIn: refreshed.expiresIn ?? undefined,
-          });
-          const isValid = await validateToken(refreshed.accessToken);
-          if (isValid) {
-            setAccessToken(refreshed.accessToken);
-            setIsLoggedIn(true);
-            return;
-          }
-        } catch (e) {
-          console.log("Refresh failed, will validate existing token", e);
-        }
-      }
-
-      const isValid = await validateToken(stored.accessToken);
-      if (isValid) {
-        setAccessToken(stored.accessToken);
+      const signInWith = async (token: string): Promise<boolean> => {
+        if (!(await validateToken(token))) return false;
+        setAccessToken(token);
         setIsLoggedIn(true);
-      } else {
-        if (stored.refreshToken) {
-          try {
-            const refreshed = await refreshAsync(
-              {
-                clientId: entraConfig.clientId,
-                refreshToken: stored.refreshToken,
-              },
-              discovery,
-            );
-            const isRefreshedValid = await validateToken(refreshed.accessToken);
-            if (isRefreshedValid) {
-              await saveTokens({
-                accessToken: refreshed.accessToken,
-                refreshToken: refreshed.refreshToken ?? stored.refreshToken,
-                idToken: refreshed.idToken ?? undefined,
-                expiresIn: refreshed.expiresIn ?? undefined,
-              });
-              setAccessToken(refreshed.accessToken);
-              setIsLoggedIn(true);
-              return;
-            }
-          } catch {}
+        return true;
+      };
+
+      const tryRefresh = async (): Promise<boolean> => {
+        if (!stored.refreshToken) return false;
+        try {
+          return await signInWith(await refreshTokens(stored.refreshToken));
+        } catch {
+          return false;
         }
-        await clearTokens();
-        setAccessToken(null);
-        setUser(null);
-        setIsLoggedIn(false);
-      }
+      };
+
+      if (isTokenExpired(stored.expiresAt) && (await tryRefresh())) return;
+      if (await signInWith(stored.accessToken)) return;
+      if (await tryRefresh()) return;
+
+      await clearTokens();
+      setIsLoggedIn(false);
+      setAccessToken(null);
+      setUser(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setIsLoggedIn(false);
@@ -154,7 +132,7 @@ export default function useMicrosoftAuth() {
     } finally {
       setLoading(false);
     }
-  }, [validateToken]);
+  }, [validateToken, refreshTokens]);
 
   useEffect(() => {
     restoreSession();
@@ -164,9 +142,9 @@ export default function useMicrosoftAuth() {
     if (!response) return;
 
     if (response.type === "success") {
-      const code = (response.params as Record<string, string>).code;
-      const directAccessToken = (response.params as Record<string, string>)
-        .access_token;
+      const params = response.params as Record<string, string>;
+      const code = params.code;
+      const directAccessToken = params.access_token;
 
       if (directAccessToken) {
         (async () => {
@@ -228,21 +206,8 @@ export default function useMicrosoftAuth() {
           setAccessToken(tokenResponse.accessToken);
           setIsLoggedIn(true);
         } catch (e) {
-          const raw = e instanceof Error ? e.message : String(e);
-          let msg = raw;
-          if (
-            raw.includes("AADSTS9002326") ||
-            raw.includes("Cross-origin token redemption")
-          ) {
-            msg = `AADSTS9002326: Add SPA platform with ${redirectUri} and http://localhost:8081 in Entra. Raw: ${raw}`;
-          } else if (
-            raw.includes("AADSTS50011") ||
-            raw.includes("redirect URI")
-          ) {
-            msg = `AADSTS50011: Redirect URI mismatch. Add exactly "${redirectUri}" (+ http://localhost:8081) to Entra -> App registrations -> Authentication. Raw: ${raw}`;
-          }
-          console.log("exchangeCodeAsync failed", msg);
-          setError(msg);
+          console.error("Token exchange failed:", e);
+          setError(e instanceof Error ? e.message : String(e));
           await clearTokens();
           setIsLoggedIn(false);
           setAccessToken(null);
@@ -252,12 +217,7 @@ export default function useMicrosoftAuth() {
         }
       })();
     } else if (response.type === "error") {
-      const raw = response.error?.message ?? "Authentication error";
-      let msg = raw;
-      if (raw.includes("AADSTS50011") || raw.includes("redirect URI")) {
-        msg = `AADSTS50011: Add "${redirectUri}" to Entra redirect URIs. Raw: ${raw}`;
-      }
-      setError(msg);
+      setError(response.error?.message ?? "Authentication error");
       setLoading(false);
     } else if (response.type === "dismiss") {
       setLoading(false);
@@ -280,29 +240,19 @@ export default function useMicrosoftAuth() {
       return null;
     }
     try {
-      const refreshed = await refreshAsync(
-        { clientId: entraConfig.clientId, refreshToken: stored.refreshToken },
-        discovery,
-      );
-      await saveTokens({
-        accessToken: refreshed.accessToken,
-        refreshToken: refreshed.refreshToken ?? stored.refreshToken,
-        idToken: refreshed.idToken ?? undefined,
-        expiresIn: refreshed.expiresIn ?? undefined,
-      });
-      setAccessToken(refreshed.accessToken);
+      const token = await refreshTokens(stored.refreshToken);
+      setAccessToken(token);
       setIsLoggedIn(true);
-      return refreshed.accessToken;
+      return token;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(msg);
+      setError(e instanceof Error ? e.message : String(e));
       await clearTokens();
       setIsLoggedIn(false);
       setAccessToken(null);
       setUser(null);
       return null;
     }
-  }, []);
+  }, [refreshTokens]);
 
   return {
     request,
