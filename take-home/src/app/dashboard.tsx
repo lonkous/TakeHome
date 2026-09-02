@@ -1,34 +1,50 @@
 import { useEffect, useState } from "react";
-import { useTourTarget } from '@/lib/tour';
-import { ActivityIndicator, StyleSheet, Text, View, Platform } from "react-native";
-import type { ChartData } from "@/components/chart"
+import { useTourTarget } from "@/lib/tour";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+  Platform,
+} from "react-native";
+import type { ChartData } from "@/components/chart";
 import type { TData } from "@/schemas/data.schema";
 import { HelpButton } from "@/components/help-button";
 
 let Chart: React.ComponentType<{ data: ChartData[] }> | null = null;
-if (Platform.OS !== 'web') {
+if (Platform.OS !== "web") {
   Chart = require("@/components/chart").default;
 }
 
 function DashboardContent({ chartData }: { chartData: ChartData[] }) {
-  const chartRef = useTourTarget('chart');
-  const keyRef = useTourTarget('key');
+  const chartRef = useTourTarget("chart");
+  const keyRef = useTourTarget("key");
 
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     return (
       <View style={styles.container}>
         <View ref={chartRef as any} collapsable={false} style={styles.webList}>
           {chartData.map((item) => (
             <View key={item.month} style={styles.webRow}>
               <Text style={styles.month}>
-                {new Date(2023, item.month - 1).toLocaleString("default", { month: "short" })}: {item.value}
+                {new Date(2023, item.month - 1).toLocaleString("default", {
+                  month: "short",
+                })}
+                : {item.value}
               </Text>
-              <View style={[styles.webBar, { width: `${Math.min(item.value, 100)}%` }]} />
+              <View
+                style={[
+                  styles.webBar,
+                  { width: `${Math.min(item.value, 100)}%` },
+                ]}
+              />
             </View>
           ))}
         </View>
-        <View ref={keyRef as any} collapsable={false} style={{ marginTop: 16 }}><Text>Create instantly demo</Text></View>
-        <HelpButton/>
+        <View ref={keyRef as any} collapsable={false} style={{ marginTop: 16 }}>
+          <Text>Create instantly demo</Text>
+        </View>
+        <HelpButton />
       </View>
     );
   }
@@ -39,7 +55,7 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
         {Chart ? (
           <>
             <Chart data={chartData} />
-            <View style={styles.values}  collapsable={false}>
+            <View style={styles.values} collapsable={false}>
               {chartData.map((item) => (
                 <Text key={`v-${item.month}`} style={styles.value}>
                   {item.value}
@@ -58,7 +74,7 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
           </>
         ) : null}
       </View>
-        <HelpButton/>
+      <HelpButton />
     </View>
   );
 }
@@ -72,7 +88,7 @@ export default function Index() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch('/api/datas');
+        const res = await fetch("/api/datas");
         if (!res.ok) {
           const body = await res.text();
           throw new Error(body || `Failed to fetch: ${res.status}`);
@@ -80,13 +96,15 @@ export default function Index() {
         const json = (await res.json()) as TData[];
         if (!cancelled) setRaw(json);
       } catch (e: any) {
-        if (!cancelled) setError(e.message ?? 'Failed to load data');
+        if (!cancelled) setError(e.message ?? "Failed to load data");
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const fallback: ChartData[] = [
@@ -97,9 +115,12 @@ export default function Index() {
     { month: 5, value: 5 },
   ];
 
-  const chartData: ChartData[] = raw && raw.length > 0
-    ? [...raw].sort((a, b) => a.id - b.id).map((d) => ({ month: d.id, value: d.value }))
-    : fallback;
+  const chartData: ChartData[] =
+    raw && raw.length > 0
+      ? [...raw]
+          .sort((a, b) => a.id - b.id)
+          .map((d) => ({ month: d.id, value: d.value }))
+      : fallback;
 
   if (loading) {
     return (
@@ -116,10 +137,12 @@ export default function Index() {
         <Text style={styles.error}>Error: {error}</Text>
         <Text style={styles.hint}>Showing fallback data</Text>
         <View style={styles.chart}>
-          {Platform.OS !== 'web' && Chart ? (
+          {Platform.OS !== "web" && Chart ? (
             <Chart data={fallback} />
           ) : (
-            <View><Text>This currently only works for mobile</Text></View>
+            <View>
+              <Text>This currently only works for mobile</Text>
+            </View>
           )}
         </View>
       </View>
