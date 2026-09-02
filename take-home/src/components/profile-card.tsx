@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   primaryButton: {
-    backgroundColor: "#208AEF",
+    backgroundColor: "#a78bfa",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#208AEF",
+    backgroundColor: "#a78bfa",
     alignItems: "center",
     justifyContent: "center",
   },

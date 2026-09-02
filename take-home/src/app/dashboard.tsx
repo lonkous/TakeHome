@@ -8,8 +8,12 @@ import { HelpButton } from "@/components/help-button";
 import { ThemedText } from "@/components/themed-text";
 import { Backgrounds } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "@/hooks/use-theme";
 
 const BAR_LABEL_WIDTH = 48;
+const Y_AXIS_WIDTH = 32;
+const Y_TICK_STEP = 10;
+const Y_AXIS_MIN_TOP_TICK = 70;
 
 let Chart: React.ComponentType<ChartProps> | null = null;
 if (Platform.OS !== "web") {
@@ -19,22 +23,41 @@ if (Platform.OS !== "web") {
 function DashboardContent({ chartData }: { chartData: ChartData[] }) {
   const chartRef = useTourTarget("chart");
   const keyRef = useTourTarget("key");
-  const [xScale, setXScale] = useState<Scale | null>(null);
+  const [scales, setScales] = useState<{ x: Scale; y: Scale } | null>(null);
   const scheme = useColorScheme();
   const screenBg = scheme === "dark" ? Backgrounds.dark : Backgrounds.light;
 
   const handleScaleChange = useCallback(
-    (x: Scale) => setXScale(() => x),
+    (x: Scale, y: Scale) => setScales({ x, y }),
     []
   );
 
-  const barX = (month: number): number => (xScale ? xScale(month) : 0);
+  const barX = (month: number): number => (scales ? scales.x(month) : 0);
+
+  const maxValue =
+    chartData.length > 0 ? Math.max(...chartData.map((d) => d.value)) : 0;
+  const topTick = Math.max(
+    Y_AXIS_MIN_TOP_TICK,
+    Math.ceil(maxValue / Y_TICK_STEP) * Y_TICK_STEP
+  );
+  const yTicks: number[] = [];
+  for (let v = Y_TICK_STEP; v <= topTick; v += Y_TICK_STEP) {
+    yTicks.push(v);
+  }
+  const minorLines: number[] = [];
+  for (let v = Y_TICK_STEP; v <= topTick; v += Y_TICK_STEP * 2) {
+    minorLines.push(v);
+  }
+  const theme = useTheme();
 
   if (Platform.OS === "web") {
     return (
       <View
         style={[styles.container, { experimental_backgroundImage: screenBg }]}
       >
+        <ThemedText type="smallBold" style={styles.webTitle}>
+          Energy Sold (kWh)
+        </ThemedText>
         <View ref={chartRef as any} collapsable={false} style={styles.webList}>
           {chartData.map((item) => (
             <View key={item.month} style={styles.webRow}>
@@ -68,11 +91,53 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
       <View style={styles.chart} ref={chartRef as any} collapsable={false}>
         {Chart ? (
           <>
-            <View style={styles.canvas}>
-              <Chart data={chartData} onScaleChange={handleScaleChange} />
+            <View style={styles.titleRow}>
+              <ThemedText themeColor="textSecondary" style={styles.yAxisUnit}>
+                kWh
+              </ThemedText>
+              <ThemedText type="smallBold" style={styles.chartTitle}>
+                Energy Sold
+              </ThemedText>
+            </View>
+            <View style={styles.plotRow}>
+              <View style={styles.yAxis} collapsable={false}>
+                {scales &&
+                  yTicks.map((v) => (
+                    <ThemedText
+                      key={v}
+                      themeColor="textSecondary"
+                      style={[styles.yTick, { top: scales.y(v) - 7 }]}
+                    >
+                      {v}
+                    </ThemedText>
+                  ))}
+              </View>
+              <View style={styles.canvas}>
+                {scales && (
+                  <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                    {minorLines.map((v) => (
+                      <View
+                        key={v}
+                        style={[
+                          styles.minorLine,
+                          {
+                            top: scales.y(v),
+                            backgroundColor: theme.textSecondary,
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                )}
+                <Chart
+                  data={chartData}
+                  domainY={[0, topTick]}
+                  onScaleChange={handleScaleChange}
+                />
+              </View>
             </View>
             <View style={styles.labelRow} collapsable={false}>
-              {xScale &&
+              {scales &&
                 chartData.map((item) => (
                   <ThemedText
                     key={`v-${item.month}`}
@@ -87,7 +152,7 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
                 ))}
             </View>
             <View style={styles.labelRow} ref={keyRef as any}>
-              {xScale &&
+              {scales &&
                 chartData.map((item) => (
                   <ThemedText
                     key={item.month}
@@ -103,6 +168,11 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
                     })}
                   </ThemedText>
                 ))}
+            </View>
+            <View style={styles.xAxisTitleRow}>
+              <ThemedText themeColor="textSecondary" style={styles.xAxisTitle}>
+                Month
+              </ThemedText>
             </View>
           </>
         ) : null}
@@ -177,7 +247,7 @@ export default function Index() {
         </ThemedText>
         <View style={styles.chart}>
           {Platform.OS !== "web" && Chart ? (
-            <Chart data={fallback} />
+            <Chart data={fallback} domainY={[0, 20]} />
           ) : (
             <View>
               <ThemedText>This currently only works for mobile</ThemedText>
@@ -222,10 +292,51 @@ const styles = StyleSheet.create({
   },
   chart: {
     width: "100%",
-    height: 300,
-    paddingTop: 25,
+    height: 340,
+    paddingTop: 16,
     paddingHorizontal: 25,
     paddingBottom: 10,
+  },
+
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  yAxisUnit: {
+    width: Y_AXIS_WIDTH,
+    fontSize: 11,
+    textAlign: "right",
+    paddingRight: 6,
+  },
+  chartTitle: {
+    flex: 1,
+    textAlign: "center",
+    marginRight: Y_AXIS_WIDTH,
+  },
+
+  plotRow: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  yAxis: {
+    width: Y_AXIS_WIDTH,
+  },
+  yTick: {
+    position: "absolute",
+    right: 6,
+    width: Y_AXIS_WIDTH - 6,
+    fontSize: 11,
+    lineHeight: 14,
+    textAlign: "right",
+  },
+
+  minorLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.35,
   },
 
   canvas: {
@@ -234,7 +345,7 @@ const styles = StyleSheet.create({
 
   labelRow: {
     height: 18,
-    width: "100%",
+    marginLeft: Y_AXIS_WIDTH,
   },
 
   barLabel: {
@@ -250,10 +361,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+
+  xAxisTitleRow: {
+    marginLeft: Y_AXIS_WIDTH,
+    marginTop: 2,
+  },
+  xAxisTitle: {
+    fontSize: 12,
+    textAlign: "center",
+  },
   webList: {
     width: "100%",
     padding: 16,
     gap: 8,
+  },
+  webTitle: {
+    marginBottom: 4,
   },
   webRow: {
     gap: 4,

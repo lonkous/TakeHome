@@ -10,10 +10,11 @@ export interface ChartData extends Record<string, unknown> {
 
 export interface ChartProps {
   data: ChartData[];
-  onScaleChange?: (xScale: Scale) => void;
+  domainY?: [number, number];
+  onScaleChange?: (xScale: Scale, yScale: Scale) => void;
 }
 
-export default function Chart({ data, onScaleChange }: ChartProps) {
+export default function Chart({ data, domainY, onScaleChange }: ChartProps) {
   const theme = useTheme();
 
   return (
@@ -21,12 +22,13 @@ export default function Chart({ data, onScaleChange }: ChartProps) {
       data={data}
       xKey="month"
       yKeys={["value"]}
+      domain={domainY ? { y: domainY } : undefined}
       domainPadding={{
         left: 50,
         right: 50,
         top: 30,
       }}
-      onScaleChange={(x) => onScaleChange?.(x)}
+      onScaleChange={(x, y) => onScaleChange?.(x, y)}
       axisOptions={{
         labelColor: theme.textSecondary,
         lineColor: theme.textSecondary,
