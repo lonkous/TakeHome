@@ -106,7 +106,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 export function ProfileScreenContent() {
-  const { isLoggedIn, loading, user, logout, error } = useAuth();
+  const { isLoggedIn, loading, user, logout } = useAuth();
   const profileRef = useTourTarget('profile');
 
   if (loading) {
@@ -123,7 +123,6 @@ export function ProfileScreenContent() {
         <View ref={profileRef as any} collapsable={false} style={styles.cardTarget}>
           <SignInCard />
         </View>
-        {error ? null : null}
       </View>
     );
   }
@@ -153,13 +152,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    lineHeight: 32,
-  },
-  subtitle: {
-    marginTop: -8,
   },
   card: {
     width: '100%',

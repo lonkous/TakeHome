@@ -11,7 +11,7 @@ OAuth 2.0  `expo-auth-session` against `https://login.microsoftonline.com/{tenan
 - `useMicrosoftAuth.ts` - core hook: `useAuthRequest` plus `exchangeCodeAsync` / `refreshAsync`, JWT validation against `https://graph.microsoft.com/v1.0/me`, token refresh with expiry buffer. Handles `takehome://redirect` (native) vs `makeRedirectUri()` (web).
 - `tokenStorage.ts` - platform-aware persistence: `localStorage` on web, `expo-secure-store` on native; keys `auth.{accessToken,refreshToken,idToken,expiresAt}`; `isTokenExpired` with 60s buffer.
 - `AuthContext.tsx` - React Context provider consumed via `useAuth()`; wraps the entire app in `src/app/_layout.tsx:13`.
-- `MicrosoftLoginButton.tsx` / `profile-card.tsx:243` - `SignInCard` (sign-in CTA plus error display) and `ProfileCard` (avatar initials, Entra-encoded email decoding, sign-out).
+- `profile-card.tsx` - `SignInCard` (sign-in CTA plus error display) and `ProfileCard` (avatar initials, Entra-encoded email decoding, sign-out).
 
 ### 2. Dashboard and Data Visualization (`src/app/dashboard.tsx`, `src/components/chart.tsx`, `src/services/cosmos/`)
 - API route `src/app/api/datas+api.ts:1` - `GET /api/datas` lazily initializes Cosmos DB then returns `Response.json(getAllData())`.

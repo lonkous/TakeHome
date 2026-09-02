@@ -63,10 +63,6 @@ export default function useMicrosoftAuth() {
       });
       if (!result.ok) {
         const body = await result.text().catch(() => '');
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-          console.log('Token aud/scp', { aud: payload.aud, scp: payload.scp, exp: payload.exp });
-        } catch {}
         throw new Error(`Graph /me failed: ${result.status} ${body}`);
       }
       const data = (await result.json()) as GraphUser;
