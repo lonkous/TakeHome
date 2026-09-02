@@ -1,19 +1,19 @@
-import { Platform } from 'react-native';
-import { useCallback, useEffect, useState } from 'react';
-import * as WebBrowser from 'expo-web-browser';
+import { Platform } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import * as WebBrowser from "expo-web-browser";
 import {
   exchangeCodeAsync,
   makeRedirectUri,
   refreshAsync,
   useAuthRequest,
-} from 'expo-auth-session';
-import { entraConfig, entraDiscovery } from './authConfig';
+} from "expo-auth-session";
+import { entraConfig, entraDiscovery } from "./authConfig";
 import {
   clearTokens,
   getStoredTokens,
   isTokenExpired,
   saveTokens,
-} from './tokenStorage';
+} from "./tokenStorage";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -37,9 +37,9 @@ export type GraphUser = {
 
 export default function useMicrosoftAuth() {
   const redirectUri =
-    Platform.OS === 'web'
+    Platform.OS === "web"
       ? makeRedirectUri({ scheme: undefined } as any)
-      : 'takehome://redirect';
+      : "takehome://redirect";
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -53,23 +53,23 @@ export default function useMicrosoftAuth() {
       scopes: entraConfig.scopes,
       redirectUri,
     },
-    discovery
+    discovery,
   );
 
   const validateToken = useCallback(async (token: string): Promise<boolean> => {
     try {
-      const result = await fetch('https://graph.microsoft.com/v1.0/me', {
+      const result = await fetch("https://graph.microsoft.com/v1.0/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!result.ok) {
-        const body = await result.text().catch(() => '');
+        const body = await result.text().catch(() => "");
         throw new Error(`Graph /me failed: ${result.status} ${body}`);
       }
       const data = (await result.json()) as GraphUser;
       setUser(data);
       return true;
     } catch (err) {
-      console.log('Token is invalid:', err);
+      console.log("Token is invalid:", err);
       setUser(null);
       return false;
     }
@@ -94,7 +94,7 @@ export default function useMicrosoftAuth() {
               clientId: entraConfig.clientId,
               refreshToken: stored.refreshToken,
             },
-            discovery
+            discovery,
           );
           await saveTokens({
             accessToken: refreshed.accessToken,
@@ -109,7 +109,7 @@ export default function useMicrosoftAuth() {
             return;
           }
         } catch (e) {
-          console.log('Refresh failed, will validate existing token', e);
+          console.log("Refresh failed, will validate existing token", e);
         }
       }
 
@@ -121,8 +121,11 @@ export default function useMicrosoftAuth() {
         if (stored.refreshToken) {
           try {
             const refreshed = await refreshAsync(
-              { clientId: entraConfig.clientId, refreshToken: stored.refreshToken },
-              discovery
+              {
+                clientId: entraConfig.clientId,
+                refreshToken: stored.refreshToken,
+              },
+              discovery,
             );
             const isRefreshedValid = await validateToken(refreshed.accessToken);
             if (isRefreshedValid) {
@@ -136,7 +139,7 @@ export default function useMicrosoftAuth() {
               setIsLoggedIn(true);
               return;
             }
-          } catch { }
+          } catch {}
         }
         await clearTokens();
         setAccessToken(null);
@@ -160,9 +163,10 @@ export default function useMicrosoftAuth() {
   useEffect(() => {
     if (!response) return;
 
-    if (response.type === 'success') {
+    if (response.type === "success") {
       const code = (response.params as Record<string, string>).code;
-      const directAccessToken = (response.params as Record<string, string>).access_token;
+      const directAccessToken = (response.params as Record<string, string>)
+        .access_token;
 
       if (directAccessToken) {
         (async () => {
@@ -176,7 +180,7 @@ export default function useMicrosoftAuth() {
               setIsLoggedIn(true);
             } else {
               await clearTokens();
-              setError('Token validation failed');
+              setError("Token validation failed");
             }
           } finally {
             setLoading(false);
@@ -186,13 +190,13 @@ export default function useMicrosoftAuth() {
       }
 
       if (!code) {
-        setError('No authorization code returned');
+        setError("No authorization code returned");
         setLoading(false);
         return;
       }
 
       if (!request?.codeVerifier) {
-        setError('Missing PKCE code verifier');
+        setError("Missing PKCE code verifier");
         setLoading(false);
         return;
       }
@@ -208,7 +212,7 @@ export default function useMicrosoftAuth() {
               redirectUri,
               extraParams: { code_verifier: request.codeVerifier! },
             },
-            discovery
+            discovery,
           );
 
           await saveTokens({
@@ -219,19 +223,25 @@ export default function useMicrosoftAuth() {
           });
 
           const ok = await validateToken(tokenResponse.accessToken);
-          if (!ok) throw new Error('Token validation failed after exchange');
+          if (!ok) throw new Error("Token validation failed after exchange");
 
           setAccessToken(tokenResponse.accessToken);
           setIsLoggedIn(true);
         } catch (e) {
           const raw = e instanceof Error ? e.message : String(e);
           let msg = raw;
-          if (raw.includes('AADSTS9002326') || raw.includes('Cross-origin token redemption')) {
+          if (
+            raw.includes("AADSTS9002326") ||
+            raw.includes("Cross-origin token redemption")
+          ) {
             msg = `AADSTS9002326: Add SPA platform with ${redirectUri} and http://localhost:8081 in Entra. Raw: ${raw}`;
-          } else if (raw.includes('AADSTS50011') || raw.includes('redirect URI')) {
+          } else if (
+            raw.includes("AADSTS50011") ||
+            raw.includes("redirect URI")
+          ) {
             msg = `AADSTS50011: Redirect URI mismatch. Add exactly "${redirectUri}" (+ http://localhost:8081) to Entra -> App registrations -> Authentication. Raw: ${raw}`;
           }
-          console.log('exchangeCodeAsync failed', msg);
+          console.log("exchangeCodeAsync failed", msg);
           setError(msg);
           await clearTokens();
           setIsLoggedIn(false);
@@ -241,15 +251,15 @@ export default function useMicrosoftAuth() {
           setLoading(false);
         }
       })();
-    } else if (response.type === 'error') {
-      const raw = response.error?.message ?? 'Authentication error';
+    } else if (response.type === "error") {
+      const raw = response.error?.message ?? "Authentication error";
       let msg = raw;
-      if (raw.includes('AADSTS50011') || raw.includes('redirect URI')) {
+      if (raw.includes("AADSTS50011") || raw.includes("redirect URI")) {
         msg = `AADSTS50011: Add "${redirectUri}" to Entra redirect URIs. Raw: ${raw}`;
       }
       setError(msg);
       setLoading(false);
-    } else if (response.type === 'dismiss') {
+    } else if (response.type === "dismiss") {
       setLoading(false);
     }
   }, [response, request, redirectUri, validateToken]);
@@ -266,13 +276,13 @@ export default function useMicrosoftAuth() {
   const refresh = useCallback(async (): Promise<string | null> => {
     const stored = await getStoredTokens();
     if (!stored.refreshToken) {
-      setError('No refresh token available');
+      setError("No refresh token available");
       return null;
     }
     try {
       const refreshed = await refreshAsync(
         { clientId: entraConfig.clientId, refreshToken: stored.refreshToken },
-        discovery
+        discovery,
       );
       await saveTokens({
         accessToken: refreshed.accessToken,

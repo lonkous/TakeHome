@@ -3,14 +3,14 @@ const tenantId = process.env.EXPO_PUBLIC_AZURE_TENANT_ID;
 
 if (!clientId || !tenantId) {
   throw new Error(
-    'Missing Entra env: set EXPO_PUBLIC_AZURE_CLIENT_ID and EXPO_PUBLIC_AZURE_TENANT_ID (see .env.example)'
+    "Missing Entra env: set EXPO_PUBLIC_AZURE_CLIENT_ID and EXPO_PUBLIC_AZURE_TENANT_ID (see .env.example)",
   );
 }
 
 export const entraConfig = {
   clientId,
   tenantId,
-  scopes: ['openid', 'profile', 'email', 'offline_access', 'User.Read'],
+  scopes: ["openid", "profile", "email", "offline_access", "User.Read"],
 };
 
 export const entraDiscovery = {

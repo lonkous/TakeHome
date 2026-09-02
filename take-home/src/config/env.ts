@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Client-safe env. No dotenv, no Node APIs, no Cosmos master key.
 // Only public EXPO_PUBLIC_ vars are available in Expo web/native bundles.

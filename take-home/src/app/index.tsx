@@ -1,7 +1,7 @@
-import { Platform, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedView } from '@/components/themed-view';
-import { ProfileScreenContent } from '@/components/profile-card';
+import { Platform, ScrollView, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ThemedView } from "@/components/themed-view";
+import { ProfileScreenContent } from "@/components/profile-card";
 
 export default function Index() {
   const insets = useSafeAreaInsets();
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

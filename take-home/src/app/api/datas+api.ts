@@ -1,5 +1,5 @@
-import { initializeCosmosDB } from '@/services/cosmos/config';
-import { getAllData } from '@/services/cosmos/data.service';
+import { initializeCosmosDB } from "@/services/cosmos/config";
+import { getAllData } from "@/services/cosmos/data.service";
 
 let initialized = false;
 
@@ -16,6 +16,9 @@ export async function GET(request: Request) {
     const datas = await getAllData();
     return Response.json(datas);
   } catch (error: any) {
-    return Response.json({ error: error.message ?? 'Failed to fetch datas' }, { status: 500 });
+    return Response.json(
+      { error: error.message ?? "Failed to fetch datas" },
+      { status: 500 },
+    );
   }
 }

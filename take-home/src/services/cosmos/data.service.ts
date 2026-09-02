@@ -1,7 +1,7 @@
-import { getDataContainer, handleCosmosError } from './config';
-import type { TData } from '@/schemas/data.schema';
+import { getDataContainer, handleCosmosError } from "./config";
+import type { TData } from "@/schemas/data.schema";
 
-type CosmosData = Omit<TData, 'id'> & { id: string };
+type CosmosData = Omit<TData, "id"> & { id: string };
 
 function toCosmosItem(data: TData): CosmosData {
   return { ...data, id: String(data.id) };
@@ -15,7 +15,9 @@ export async function getDataById(id: number): Promise<TData | null> {
   try {
     const container = getDataContainer();
     const idStr = String(id);
-    const { resource, statusCode } = await container.item(idStr, id).read<CosmosData>();
+    const { resource, statusCode } = await container
+      .item(idStr, id)
+      .read<CosmosData>();
 
     if (statusCode === 404 || !resource) {
       return null;
@@ -29,7 +31,9 @@ export async function getDataById(id: number): Promise<TData | null> {
 export async function getAllData(): Promise<TData[]> {
   try {
     const container = getDataContainer();
-    const { resources } = await container.items.readAll<CosmosData>().fetchAll();
+    const { resources } = await container.items
+      .readAll<CosmosData>()
+      .fetchAll();
     return resources.map(fromCosmosItem);
   } catch (error: any) {
     return handleCosmosError(error);
@@ -39,8 +43,10 @@ export async function getAllData(): Promise<TData[]> {
 export async function createData(data: TData): Promise<TData> {
   try {
     const container = getDataContainer();
-    const { resource } = await container.items.create<CosmosData>(toCosmosItem(data));
-    if (!resource) throw new Error('Failed to create data');
+    const { resource } = await container.items.create<CosmosData>(
+      toCosmosItem(data),
+    );
+    if (!resource) throw new Error("Failed to create data");
     return fromCosmosItem(resource);
   } catch (error: any) {
     return handleCosmosError(error);
@@ -50,8 +56,10 @@ export async function createData(data: TData): Promise<TData> {
 export async function upsertData(data: TData): Promise<TData> {
   try {
     const container = getDataContainer();
-    const { resource } = await container.items.upsert<CosmosData>(toCosmosItem(data));
-    if (!resource) throw new Error('Failed to upsert data');
+    const { resource } = await container.items.upsert<CosmosData>(
+      toCosmosItem(data),
+    );
+    if (!resource) throw new Error("Failed to upsert data");
     return fromCosmosItem(resource);
   } catch (error: any) {
     return handleCosmosError(error);

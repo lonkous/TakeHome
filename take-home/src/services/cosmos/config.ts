@@ -9,9 +9,9 @@ import {
   RestError,
   AbortError,
   TimeoutError,
-} from '@azure/cosmos';
+} from "@azure/cosmos";
 
-import config from '@/config/env.server';
+import config from "@/config/env.server";
 
 let client: CosmosClient;
 let database: Database;
@@ -25,14 +25,16 @@ async function initializeCosmosDB(): Promise<void> {
       diagnosticLevel: CosmosDbDiagnosticLevel.debug,
     });
 
-    const { database: db } = await client.databases.createIfNotExists({ id: config.cosmos.database });
+    const { database: db } = await client.databases.createIfNotExists({
+      id: config.cosmos.database,
+    });
     database = db;
 
     console.log(`Database '${config.cosmos.database}' initialized.`);
 
     dataContainer = await createDatasContainer();
 
-    console.log('Cosmos DB initialized successfully.');
+    console.log("Cosmos DB initialized successfully.");
   } catch (error: any) {
     return handleCosmosError(error);
   }
@@ -42,14 +44,15 @@ async function createDatasContainer(): Promise<Container> {
   const containerDefinition = {
     id: config.cosmos.containers.datas,
     partitionKey: {
-      paths: ['/id'],
+      paths: ["/id"],
       version: PartitionKeyDefinitionVersion.V2,
       kind: PartitionKeyKind.Hash,
     },
   };
 
   try {
-    const { container } = await database.containers.createIfNotExists(containerDefinition);
+    const { container } =
+      await database.containers.createIfNotExists(containerDefinition);
     console.log(`'${container.id}' is ready.`);
     return container;
   } catch (error: any) {
@@ -59,7 +62,9 @@ async function createDatasContainer(): Promise<Container> {
 
 function getDataContainer(): Container {
   if (!dataContainer) {
-    throw new Error('data container is not initialized. Call initializeCosmosDB() first.');
+    throw new Error(
+      "data container is not initialized. Call initializeCosmosDB() first.",
+    );
   }
   return dataContainer;
 }
@@ -72,12 +77,16 @@ const handleCosmosError = (error: any): never => {
   } else if (error instanceof AbortError) {
     throw new Error(error.message);
   } else if (error instanceof TimeoutError) {
-    throw new Error(`TimeoutError code: ${error.code}, message: ${error.message}`);
+    throw new Error(
+      `TimeoutError code: ${error.code}, message: ${error.message}`,
+    );
   } else if (error.code === 409) {
-    throw new Error('Conflict occurred while creating an item using an existing ID.');
+    throw new Error(
+      "Conflict occurred while creating an item using an existing ID.",
+    );
   } else {
     console.log(JSON.stringify(error));
-    throw new Error('An error occurred while processing your request.');
+    throw new Error("An error occurred while processing your request.");
   }
 };
 

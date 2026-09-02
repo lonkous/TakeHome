@@ -1,6 +1,12 @@
-import * as React from 'react';
+import * as React from "react";
 
-export function TourProvider({ children }: { children: React.ReactNode; tours?: any; insets?: any }) {
+export function TourProvider({
+  children,
+}: {
+  children: React.ReactNode;
+  tours?: any;
+  insets?: any;
+}) {
   return React.createElement(React.Fragment, null, children);
 }
 
@@ -24,5 +30,3 @@ export function useTour() {
 export function useTourTarget(_id?: string, _options?: any) {
   return React.useRef(null) as any;
 }
-
-

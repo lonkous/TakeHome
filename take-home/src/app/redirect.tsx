@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/auth/AuthContext';
+import { useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
+import { useAuth } from "@/auth/AuthContext";
 
 export default function RedirectScreen() {
   const router = useRouter();
@@ -9,12 +9,12 @@ export default function RedirectScreen() {
 
   useEffect(() => {
     if (!loading) {
-      router.replace(isLoggedIn ? '/dashboard' : '/');
+      router.replace(isLoggedIn ? "/dashboard" : "/");
     }
   }, [loading, isLoggedIn]);
 
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
       <ActivityIndicator />
     </View>
   );
