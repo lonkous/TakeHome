@@ -1,13 +1,66 @@
 import { useEffect, useState } from "react";
+import { useTourTarget } from '@/lib/tour';
 import { ActivityIndicator, StyleSheet, Text, View, Platform } from "react-native";
 import type { ChartData } from "@/components/chart"
 import type { TData } from "@/schemas/data.schema";
+import { HelpButton } from "@/components/help-button";
 
-// Avoid static import of Skia chart on web - CanvasKit is undefined and causes nullthrows at module evaluation
 let Chart: React.ComponentType<{ data: ChartData[] }> | null = null;
 if (Platform.OS !== 'web') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   Chart = require("@/components/chart").default;
+}
+
+function DashboardContent({ chartData }: { chartData: ChartData[] }) {
+  const chartRef = useTourTarget('chart');
+  const keyRef = useTourTarget('key');
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={styles.container}>
+        <View ref={chartRef as any} collapsable={false} style={styles.webList}>
+          {chartData.map((item) => (
+            <View key={item.month} style={styles.webRow}>
+              <Text style={styles.month}>
+                {new Date(2023, item.month - 1).toLocaleString("default", { month: "short" })}: {item.value}
+              </Text>
+              <View style={[styles.webBar, { width: `${Math.min(item.value, 100)}%` }]} />
+            </View>
+          ))}
+        </View>
+        <View ref={keyRef as any} collapsable={false} style={{ marginTop: 16 }}><Text>Create instantly demo</Text></View>
+        <HelpButton/>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.chart} ref={chartRef as any} collapsable={false}>
+        {Chart ? (
+          <>
+            <Chart data={chartData} />
+            <View style={styles.values}  collapsable={false}>
+              {chartData.map((item) => (
+                <Text key={`v-${item.month}`} style={styles.value}>
+                  {item.value}
+                </Text>
+              ))}
+            </View>
+            <View style={styles.months} ref={keyRef as any}>
+              {chartData.map((item) => (
+                <Text key={item.month} style={styles.month}>
+                  {new Date(2023, item.month - 1).toLocaleString("default", {
+                    month: "short",
+                  })}
+                </Text>
+              ))}
+            </View>
+          </>
+        ) : null}
+      </View>
+        <HelpButton/>
+    </View>
+  );
 }
 
 export default function Index() {
@@ -81,52 +134,7 @@ export default function Index() {
     );
   }
 
-  if (Platform.OS === 'web') {
-    return (
-      <View style={styles.container}>
-        <Text>TEST (Web fallback)</Text>
-        <View style={styles.webList}>
-          {chartData.map((item) => (
-            <View key={item.month} style={styles.webRow}>
-              <Text style={styles.month}>
-                {new Date(2023, item.month - 1).toLocaleString("default", { month: "short" })}: {item.value}
-              </Text>
-              <View style={[styles.webBar, { width: `${Math.min(item.value, 100)}%` }]} />
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.chart}>
-        {Chart ? (
-          <>
-            <Chart data={chartData} />
-            {/* Values row - shows numeric value per bar (mobile) */}
-            <View style={styles.values}>
-              {chartData.map((item) => (
-                <Text key={`v-${item.month}`} style={styles.value}>
-                  {item.value}
-                </Text>
-              ))}
-            </View>
-            <View style={styles.months}>
-              {chartData.map((item) => (
-                <Text key={item.month} style={styles.month}>
-                  {new Date(2023, item.month - 1).toLocaleString("default", {
-                    month: "short",
-                  })}
-                </Text>
-              ))}
-            </View>
-          </>
-        ) : null}
-      </View>
-    </View >
-  );
+  return <DashboardContent chartData={chartData} />;
 }
 
 const styles = StyleSheet.create({

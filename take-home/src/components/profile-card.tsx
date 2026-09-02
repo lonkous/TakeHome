@@ -4,6 +4,7 @@ import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/auth/AuthContext';
 import type { GraphUser } from '@/auth/useMicrosoftAuth';
+import { useTourTarget } from '@/lib/tour';
 
 function initials(user: GraphUser | null): string {
   if (!user?.displayName) return 'ME';
@@ -62,16 +63,17 @@ export function SignInCard() {
 
 export function ProfileCard({ user, onSignOut }: { user: GraphUser; onSignOut: () => void }) {
   const email = displayEmail(user);
+
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <View style={styles.row}>
+      <View style={styles.row} >
         <View style={styles.avatar}>
           <ThemedText type="subtitle" style={styles.avatarText}>{initials(user)}</ThemedText>
         </View>
-        <View style={styles.nameBlock}>
+        <View style={styles.nameBlock} >
           <ThemedText type="subtitle" numberOfLines={1}>{user.displayName ?? '—'}</ThemedText>
           {email ? (
-            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} >
               {email}
             </ThemedText>
           ) : null}
@@ -87,7 +89,7 @@ export function ProfileCard({ user, onSignOut }: { user: GraphUser; onSignOut: (
         </>
       ) : null}
 
-      <Pressable onPress={onSignOut} style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
+      <Pressable onPress={onSignOut}  style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
         <ThemedText type="smallBold">Sign out</ThemedText>
       </Pressable>
     </ThemedView>
@@ -105,6 +107,7 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 export function ProfileScreenContent() {
   const { isLoggedIn, loading, user, logout, error } = useAuth();
+  const profileRef = useTourTarget('profile');
 
   if (loading) {
     return (
@@ -117,7 +120,9 @@ export function ProfileScreenContent() {
   if (!isLoggedIn || !user) {
     return (
       <View style={styles.screen}>
-        <SignInCard />
+        <View ref={profileRef as any} collapsable={false} style={styles.cardTarget}>
+          <SignInCard />
+        </View>
         {error ? null : null}
       </View>
     );
@@ -125,7 +130,9 @@ export function ProfileScreenContent() {
 
   return (
     <View style={styles.screen}>
-      <ProfileCard user={user} onSignOut={logout} />
+      <View ref={profileRef as any} collapsable={false} style={styles.cardTarget}>
+        <ProfileCard user={user} onSignOut={logout} />
+      </View>
     </View>
   );
 }
@@ -138,6 +145,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: Spacing.three,
     gap: Spacing.three,
+  },
+  cardTarget: {
+    width: '100%',
   },
   loading: {
     flex: 1,
