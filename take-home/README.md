@@ -12,23 +12,75 @@ OAuth 2.0 `expo-auth-session` against `https://login.microsoftonline.com/{tenant
 - `useMicrosoftAuth.ts` - core hook: `useAuthRequest` plus `exchangeCodeAsync` / `refreshAsync`, JWT validation against `https://graph.microsoft.com/v1.0/me`, token refresh with expiry buffer. Handles `takehome://redirect` (native) vs `makeRedirectUri()` (web).
 - `tokenStorage.ts` - platform-aware persistence: `localStorage` on web, `expo-secure-store` on native; keys `auth.{accessToken,refreshToken,idToken,expiresAt}`; `isTokenExpired` with 60s buffer.
 - `AuthContext.tsx` - React Context provider consumed via `useAuth()`; wraps the entire app in `src/app/_layout.tsx:13`.
-- `profile-card.tsx` - `SignInCard` (sign-in CTA plus error display) and `ProfileCard` (avatar initials, Entra-encoded email decoding, sign-out).
+- `profile-card.tsx` - `SignInCard` and `ProfileCard`.
 
 ### 2. Dashboard and Data Visualization (`src/app/dashboard.tsx`, `src/components/chart.tsx`, `src/services/cosmos/`)
 
 - API route `src/app/api/datas+api.ts:1` - `GET /api/datas` lazily initializes Cosmos DB then returns `Response.json(getAllData())`.
-- Cosmos service `src/services/cosmos/config.ts` (singleton `CosmosClient` plus `createIfNotExists` DB/container `TakeHomeC` on `/id`) and `data.service.ts` (CRUD: `getAllData`, `getDataById`, `createData`, `upsertData`, `deleteData` with mapped `TData` to `CosmosData` and `handleCosmosError`).
-- Schema `src/schemas/data.schema.ts` - Zod `dataSchema { id: number, value: number }`.
+- Cosmos service `src/services/cosmos/config.ts` and `data.service.ts` (CRUD: `getAllData`, `getDataById`, `createData`, `upsertData`, `deleteData` with mapped `TData` to `CosmosData` and `handleCosmosError`).
 - Dashboard fetches `/api/datas`, maps `id` to `month` and `value` to `value` sorted by `id`, handles `loading` / `error` / `empty` states. Web renders lightweight div bars (`width: min(value,100)%`); Native lazy-requires `Chart` via `victory-native` plus `@shopify/react-native-skia` (`CartesianChart` with `Bar` plus `LinearGradient` `#a78bfa` to `#a78bfa50`).
 
 ### 3. Guided App Tour (`src/components/app-tour-provider.tsx`, `src/lib/tour*`)
 
 Powered by `guideway` (native).
 
-- `tours` definition: `main` with 3 steps `chart` ("Chart Data"), `key` ("Months"), `profile` (cutout radius 20).
-- `src/lib/tour.ts` / `tour.native.ts` re-export `guideway`; `tour.web.ts` returns a dummy `TourProvider` (Fragment) and `useTour` / `useTourTarget` stubs so web builds do not mount overlays.
-- `tour-tooltip.tsx` - dark card `#1A1A1E`, Skip / step counter / Back / Next (Done), cross-route navigation (`key` to `router.push('/')`, `profile` to `router.push('/dashboard')` with delays).
+- `tours` definition: `main` with 3 steps `chart` ("Chart Data"), `key` ("Months"), `profile`.
 - `help-button.tsx` - `Show me around` button calls `start('main')`; integrated in `dashboard.tsx` and `profile-card.tsx` via `useTourTarget`.
+
+## Tech Stack
+
+- `victory-native` 42 plus `@shopify/react-native-skia` - charts on native
+- `zod` 4.5 - schema validation (`src/schemas/data.schema.ts`, env)
+- `@azure/cosmos` 4.10 - Cosmos DB client (`src/services/cosmos/`)
+- `bun` - package manager and runtime
+- `guideway` 0.4.1 - native guided tour (`src/lib/tour*`, `src/components/app-tour-provider.tsx`)
+
+## Getting Started
+
+### Prerequisites
+
+- Node 20+ / Bun
+- Expo CLI (`bunx expo`)
+- Azure Entra app registration (client ID plus tenant ID) and Cosmos DB account (endpoint plus key)
+
+### 1. Install dependencies
+
+```bash
+bun install
+```
+
+For Expo Go / EAS, set these as `EXPO_PUBLIC_*` env vars in your EAS project or `app.config.ts:8` `extra`.
+
+### 2. Start the app
+
+```bash
+bunx expo start          # QR plus dev tools (choose iOS/Android/Web)
+bunx expo start --web    # web only
+bunx expo start --tunnel # Mobile but with Expo Go
+bun run android          # native Android build
+```
+
+The original template command `bunx expo start --start` in the starter README is not a valid Expo flag - use `bunx expo start` instead.
+
+## API Routes
+
+| Method | Route        | Description                                                                            |
+| ------ | ------------ | -------------------------------------------------------------------------------------- |
+| `GET`  | `/api/datas` | Returns all `TData[]` from Cosmos container `TakeHomeC` (`src/app/api/datas+api.ts:6`) |
+
+## Personal Decisions Made
+
+- Picked Unknown over any whenever possible
+- Did not implement/Test anything for IOS due to time constraints and not being in the ecosystem
+- Tried to use as much off the shelf packages for better Code duration as there will opensource developers working on the projects ie guideway
+- I picked purple as my accent but was kind of arbitrary as i did not have and design guidelines(just tried what personally looked best).
+
+## Future Implementations
+
+- Tests hahaha. I Ideally would have done them but was due to time constraints.
+- More dynamic chart as currently I only have one set of data that does reveal to much. e.g options for 1 week/month/year
+- probably move profile in with a settings tab into a burger drop down.
+- knowing more about the project would also effect the decisions I made.
 
 ## Project Structure
 
@@ -74,47 +126,6 @@ Powered by `guideway` (native).
 ```
 
 `.native.ts` / `.web.ts` suffixes are resolved automatically by Metro - native files are excluded from web bundles and vice versa.
-
-## Tech Stack
-
-- `victory-native` 42 plus `@shopify/react-native-skia` - charts on native
-- `zod` 4.5 - schema validation (`src/schemas/data.schema.ts`, env)
-- `@azure/cosmos` 4.10 - Cosmos DB client (`src/services/cosmos/`)
-- `bun` - package manager and runtime
-- `guideway` 0.4.1 - native guided tour (`src/lib/tour*`, `src/components/app-tour-provider.tsx`)
-
-## Getting Started
-
-### Prerequisites
-
-- Node 20+ / Bun
-- Expo CLI (`bunx expo`)
-- Azure Entra app registration (client ID plus tenant ID) and Cosmos DB account (endpoint plus key)
-
-### 1. Install dependencies
-
-```bash
-bun install
-```
-
-For Expo Go / EAS, set these as `EXPO_PUBLIC_*` env vars in your EAS project or `app.config.ts:8` `extra`.
-
-### 2. Start the app
-
-```bash
-bunx expo start          # QR plus dev tools (choose iOS/Android/Web)
-bunx expo start --web    # web only
-bunx expo start --tunnel # Mobile but with Expo Go
-bun run android          # native Android build
-```
-
-The original template command `bunx expo start --start` in the starter README is not a valid Expo flag - use `bunx expo start` instead.
-
-## API Routes
-
-| Method | Route        | Description                                                                            |
-| ------ | ------------ | -------------------------------------------------------------------------------------- |
-| `GET`  | `/api/datas` | Returns all `TData[]` from Cosmos container `TakeHomeC` (`src/app/api/datas+api.ts:6`) |
 
 ## Sources Used
 
