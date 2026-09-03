@@ -1,3 +1,4 @@
+import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
@@ -8,6 +9,7 @@ import { HelpButton } from "@/components/help-button";
 import { ThemedText } from "@/components/themed-text";
 import { Backgrounds } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAuth } from "@/auth/AuthContext";
 
 function DashboardContent({ chartData }: { chartData: ChartData[] }) {
   const scheme = useColorScheme();
@@ -24,6 +26,7 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
 }
 
 export default function Index() {
+  const { isLoggedIn, loading: authLoading, accessToken } = useAuth();
   const [raw, setRaw] = useState<TData[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,11 +34,24 @@ export default function Index() {
   const screenBg = scheme === "dark" ? Backgrounds.dark : Backgrounds.light;
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isLoggedIn || !accessToken) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     async function load() {
+      setLoading(true);
+      setError(null);
       try {
-        const res = await fetch("/api/datas");
+        const res = await fetch("/api/datas", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
         if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error("Authentication required — please sign in again");
+          }
           const body = await res.text();
           throw new Error(body || `Failed to fetch: ${res.status}`);
         }
@@ -52,7 +68,7 @@ export default function Index() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authLoading, isLoggedIn, accessToken]);
 
   const fallback: ChartData[] = [
     { month: 1, value: 1 },
@@ -69,6 +85,21 @@ export default function Index() {
           .map((d) => ({ month: d.id, value: d.value }))
       : fallback;
 
+  if (authLoading) {
+    return (
+      <View style={[styles.center, { experimental_backgroundImage: screenBg }]}>
+        <ActivityIndicator />
+        <ThemedText themeColor="textSecondary" style={styles.hint}>
+          Checking authentication...
+        </ThemedText>
+      </View>
+    );
+  }
+
+  if (!isLoggedIn || !accessToken) {
+    return <Redirect href="/" />;
+  }
+
   if (loading) {
     return (
       <View style={[styles.center, { experimental_backgroundImage: screenBg }]}>
@@ -81,11 +112,12 @@ export default function Index() {
   }
 
   if (error) {
+    const isAuthError = error.toLowerCase().includes("authentication");
     return (
       <View style={[styles.center, { experimental_backgroundImage: screenBg }]}>
         <ThemedText style={styles.error}>Error: {error}</ThemedText>
         <ThemedText themeColor="textSecondary" style={styles.hint}>
-          Showing fallback data
+          {isAuthError ? "Please sign in again" : "Showing fallback data"}
         </ThemedText>
         <View style={styles.chart}>
           <DashboardChart data={fallback} />
