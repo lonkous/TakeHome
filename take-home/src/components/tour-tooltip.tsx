@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { router } from "expo-router";
 
 type TooltipRenderProps = {
-  step: { id: string; title?: string; body?: any };
+  step: { id: string; title?: string; body?: React.ReactNode };
   next: () => void;
   back: () => void;
   skip: () => void;
@@ -41,7 +41,7 @@ export function TourTooltip(props: TooltipRenderProps) {
       {typeof step.body === "string" ? (
         <Text style={styles.body}>{step.body}</Text>
       ) : (
-        ((step.body as any) ?? null)
+        (step.body ?? null)
       )}
       <View style={styles.row}>
         <Pressable hitSlop={8} onPress={skip}>
@@ -66,10 +66,10 @@ export function TourTooltip(props: TooltipRenderProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1A1A1E',
+    backgroundColor: "#1A1A1E",
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.18,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },

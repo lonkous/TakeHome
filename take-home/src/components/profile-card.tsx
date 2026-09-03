@@ -1,3 +1,4 @@
+import * as React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "./themed-text";
 import { ThemedView } from "./themed-view";
@@ -158,7 +159,7 @@ export function ProfileScreenContent() {
     return (
       <View style={styles.screen}>
         <View
-          ref={profileRef as any}
+          ref={profileRef as unknown as React.Ref<View>}
           collapsable={false}
           style={styles.cardTarget}
         >
@@ -171,7 +172,7 @@ export function ProfileScreenContent() {
   return (
     <View style={styles.screen}>
       <View
-        ref={profileRef as any}
+        ref={profileRef as unknown as React.Ref<View>}
         collapsable={false}
         style={styles.cardTarget}
       >

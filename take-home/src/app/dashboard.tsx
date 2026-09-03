@@ -14,7 +14,9 @@ function DashboardContent({ chartData }: { chartData: ChartData[] }) {
   const screenBg = scheme === "dark" ? Backgrounds.dark : Backgrounds.light;
 
   return (
-    <View style={[styles.container, { experimental_backgroundImage: screenBg }]}>
+    <View
+      style={[styles.container, { experimental_backgroundImage: screenBg }]}
+    >
       <DashboardChart data={chartData} />
       <HelpButton />
     </View>
@@ -39,8 +41,9 @@ export default function Index() {
         }
         const json = (await res.json()) as TData[];
         if (!cancelled) setRaw(json);
-      } catch (e: any) {
-        if (!cancelled) setError(e.message ?? "Failed to load data");
+      } catch (e: unknown) {
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : "Failed to load data");
       } finally {
         if (!cancelled) setLoading(false);
       }

@@ -1,3 +1,4 @@
+import * as React from "react";
 import { StyleSheet, View } from "react-native";
 
 import { useTourTarget } from "@/lib/tour";
@@ -17,7 +18,11 @@ export default function DashboardChart({ data }: DashboardChartProps) {
       <ThemedText type="smallBold" style={styles.webTitle}>
         Energy Sold (kWh)
       </ThemedText>
-      <View ref={chartRef as any} collapsable={false} style={styles.webList}>
+      <View
+        ref={chartRef as unknown as React.Ref<View>}
+        collapsable={false}
+        style={styles.webList}
+      >
         {data.map((item) => (
           <View key={item.month} style={styles.webRow}>
             <ThemedText themeColor="textSecondary" style={styles.month}>
@@ -26,11 +31,20 @@ export default function DashboardChart({ data }: DashboardChartProps) {
               })}
               : {item.value}
             </ThemedText>
-            <View style={[styles.webBar, { width: `${Math.min(item.value, 100)}%` }]} />
+            <View
+              style={[
+                styles.webBar,
+                { width: `${Math.min(item.value, 100)}%` },
+              ]}
+            />
           </View>
         ))}
       </View>
-      <View ref={keyRef as any} collapsable={false} style={{ marginTop: 16 }}>
+      <View
+        ref={keyRef as unknown as React.Ref<View>}
+        collapsable={false}
+        style={{ marginTop: 16 }}
+      >
         <ThemedText>Create instantly demo</ThemedText>
       </View>
     </>

@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import type { Scale } from "victory-native";
@@ -25,7 +26,7 @@ export default function DashboardChart({ data }: DashboardChartProps) {
 
   const handleScaleChange = useCallback(
     (x: Scale, y: Scale) => setScales({ x, y }),
-    []
+    [],
   );
 
   const barX = (month: number): number => (scales ? scales.x(month) : 0);
@@ -33,7 +34,7 @@ export default function DashboardChart({ data }: DashboardChartProps) {
   const maxValue = data.length > 0 ? Math.max(...data.map((d) => d.value)) : 0;
   const topTick = Math.max(
     Y_AXIS_MIN_TOP_TICK,
-    Math.ceil(maxValue / Y_TICK_STEP) * Y_TICK_STEP
+    Math.ceil(maxValue / Y_TICK_STEP) * Y_TICK_STEP,
   );
   const yTicks: number[] = [];
   for (let v = Y_TICK_STEP; v <= topTick; v += Y_TICK_STEP) {
@@ -45,7 +46,11 @@ export default function DashboardChart({ data }: DashboardChartProps) {
   }
 
   return (
-    <View style={styles.chart} ref={chartRef as any} collapsable={false}>
+    <View
+      style={styles.chart}
+      ref={chartRef as unknown as React.Ref<View>}
+      collapsable={false}
+    >
       <View style={styles.titleRow}>
         <ThemedText themeColor="textSecondary" style={styles.yAxisUnit}>
           kWh
@@ -84,7 +89,11 @@ export default function DashboardChart({ data }: DashboardChartProps) {
               ))}
             </View>
           )}
-          <Chart data={data} domainY={[0, topTick]} onScaleChange={handleScaleChange} />
+          <Chart
+            data={data}
+            domainY={[0, topTick]}
+            onScaleChange={handleScaleChange}
+          />
         </View>
       </View>
       <View style={styles.labelRow} collapsable={false}>
@@ -102,7 +111,7 @@ export default function DashboardChart({ data }: DashboardChartProps) {
             </ThemedText>
           ))}
       </View>
-      <View style={styles.labelRow} ref={keyRef as any}>
+      <View style={styles.labelRow} ref={keyRef as unknown as React.Ref<View>}>
         {scales &&
           data.map((item) => (
             <ThemedText

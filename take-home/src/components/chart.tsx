@@ -1,4 +1,8 @@
-import { DashPathEffect, LinearGradient, vec } from "@shopify/react-native-skia";
+import {
+  DashPathEffect,
+  LinearGradient,
+  vec,
+} from "@shopify/react-native-skia";
 import { CartesianChart, Bar, Line } from "victory-native";
 
 import { useTheme } from "@/hooks/use-theme";

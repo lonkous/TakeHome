@@ -23,7 +23,7 @@ export async function getDataById(id: number): Promise<TData | null> {
       return null;
     }
     return fromCosmosItem(resource);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleCosmosError(error);
   }
 }
@@ -35,7 +35,7 @@ export async function getAllData(): Promise<TData[]> {
       .readAll<CosmosData>()
       .fetchAll();
     return resources.map(fromCosmosItem);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleCosmosError(error);
   }
 }
@@ -48,7 +48,7 @@ export async function createData(data: TData): Promise<TData> {
     );
     if (!resource) throw new Error("Failed to create data");
     return fromCosmosItem(resource);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleCosmosError(error);
   }
 }
@@ -61,7 +61,7 @@ export async function upsertData(data: TData): Promise<TData> {
     );
     if (!resource) throw new Error("Failed to upsert data");
     return fromCosmosItem(resource);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleCosmosError(error);
   }
 }
@@ -70,7 +70,7 @@ export async function deleteData(id: number): Promise<void> {
   try {
     const container = getDataContainer();
     await container.item(String(id), id).delete();
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleCosmosError(error);
   }
 }

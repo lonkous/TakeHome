@@ -10,14 +10,16 @@ async function ensureInitialized() {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     await ensureInitialized();
     const datas = await getAllData();
     return Response.json(datas);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return Response.json(
-      { error: error.message ?? "Failed to fetch datas" },
+      {
+        error: error instanceof Error ? error.message : "Failed to fetch datas",
+      },
       { status: 500 },
     );
   }

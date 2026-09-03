@@ -18,7 +18,9 @@ export default function Chart({ data }: ChartProps) {
             })}
             : {item.value}
           </ThemedText>
-          <View style={[styles.bar, { width: `${Math.min(item.value, 100)}%` }]} />
+          <View
+            style={[styles.bar, { width: `${Math.min(item.value, 100)}%` }]}
+          />
         </View>
       ))}
     </View>

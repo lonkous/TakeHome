@@ -35,7 +35,7 @@ async function initializeCosmosDB(): Promise<void> {
     dataContainer = await createDatasContainer();
 
     console.log("Cosmos DB initialized successfully.");
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleCosmosError(error);
   }
 }
@@ -55,7 +55,7 @@ async function createDatasContainer(): Promise<Container> {
       await database.containers.createIfNotExists(containerDefinition);
     console.log(`'${container.id}' is ready.`);
     return container;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return handleCosmosError(error);
   }
 }
@@ -69,7 +69,7 @@ function getDataContainer(): Container {
   return dataContainer;
 }
 
-const handleCosmosError = (error: any): never => {
+const handleCosmosError = (error: unknown): never => {
   if (error instanceof RestError) {
     throw new Error(`error: ${error.name},  message: ${error.message}`);
   } else if (error instanceof ErrorResponse) {
@@ -80,7 +80,12 @@ const handleCosmosError = (error: any): never => {
     throw new Error(
       `TimeoutError code: ${error.code}, message: ${error.message}`,
     );
-  } else if (error.code === 409) {
+  } else if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: unknown }).code === 409
+  ) {
     throw new Error(
       "Conflict occurred while creating an item using an existing ID.",
     );

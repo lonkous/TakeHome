@@ -49,8 +49,8 @@ function getEnv(): z.infer<typeof EnvSchema> {
 }
 
 export const env = new Proxy({} as z.infer<typeof EnvSchema>, {
-  get(_t, p) {
-    return (getEnv() as any)[p];
+  get(_t, p: string | symbol) {
+    return getEnv()[p as keyof z.infer<typeof EnvSchema>];
   },
 });
 
