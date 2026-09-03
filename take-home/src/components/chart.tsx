@@ -1,18 +1,10 @@
 import { DashPathEffect, LinearGradient, vec } from "@shopify/react-native-skia";
-import { CartesianChart, Bar, Line, type Scale } from "victory-native";
+import { CartesianChart, Bar, Line } from "victory-native";
 
 import { useTheme } from "@/hooks/use-theme";
+import type { ChartData, ChartProps } from "@/components/chart-types";
 
-export interface ChartData extends Record<string, unknown> {
-  month: number;
-  value: number;
-}
-
-export interface ChartProps {
-  data: ChartData[];
-  domainY?: [number, number];
-  onScaleChange?: (xScale: Scale, yScale: Scale) => void;
-}
+export type { ChartData, ChartProps };
 
 function linearRegression(data: ChartData[]): (month: number) => number {
   const n = data.length;
